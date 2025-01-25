@@ -1,0 +1,87 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Human Portraits</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            flex-wrap: wrap;
+        }
+
+        .portrait-container {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            width: 80%;
+            margin-top: 20px;
+        }
+
+        .portrait {
+            width: 150px;
+            height: 200px;
+            margin: 15px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            background-color: #fff;
+            text-align: center;
+        }
+
+        .portrait img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .portrait-name {
+            padding: 10px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .portrait-description {
+            padding: 5px;
+            font-size: 12px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="portrait-container">
+        <div class="portrait">
+            <img src="https://via.placeholder.com/150x200.png?text=Portrait+1" alt="Portrait 1">
+            <div class="portrait-name">John Doe</div>
+            <div class="portrait-description">Artist from NY</div>
+        </div>
+        <div class="portrait">
+            <img src="https://via.placeholder.com/150x200.png?text=Portrait+2" alt="Portrait 2">
+            <div class="portrait-name">Jane Smith</div>
+            <div class="portrait-description">Scientist and Innovator</div>
+        </div>
+        <div class="portrait">
+            <img src="https://via.placeholder.com/150x200.png?text=Portrait+3" alt="Portrait 3">
+            <div class="portrait-name">Mike Johnson</div>
+            <div class="portrait-description">Tech Entrepreneur</div>
+        </div>
+        <div class="portrait">
+            <img src="https://via.placeholder.com/150x200.png?text=Portrait+4" alt="Portrait 4">
+            <div class="portrait-name">Emily Davis</div>
+            <div class="portrait-description">Photographer & Explorer</div>
+        </div>
+        <div class="portrait">
+            <img src="https://via.placeholder.com/150x200.png?text=Portrait+5" alt="Portrait 5">
+            <div class="portrait-name">Chris Brown</div>
+            <div class="portrait-description">Chef and Restaurateur</div>
+        </div>
+    </div>
+
+</body>
+</html>
