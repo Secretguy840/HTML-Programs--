@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2D Racing Game</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; background: #ccc; }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        let car = {
+            x: 375,
+            y: 500,
+            width: 50,
+            height: 100,
+            speed: 5,
+            color: "red"
+        };
+
+        let obstacles = [];
+        let gameInterval;
+
+        function startGame() {
+            gameInterval = setInterval(gameLoop, 1000 / 60);
+        }
+
+        function gameLoop() {
+            clearCanvas();
+            moveCar();
+            createObstacles();
+            moveObstacles();
+            checkCollisions();
+            drawCar();
+            drawObstacles();
+        }
+
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function moveCar() {
+            if (keys["ArrowLeft"] && car.x > 0) car.x -= car.speed;
+            if (keys["ArrowRight"] && car.x < canvas.width - car.width) car.x += car.speed;
+        }
+
+        let keys = {};
+
+        window.addEventListener("keydown", (e) => {
+            keys[e.key] = true;
+        });
+
+        window.addEventListener("keyup", (e) => {
+            keys[e.key] = false;
+        });
+
+        function drawCar() {
+            ctx.fillStyle = car.color;
+            ctx.fillRect(car.x, car.y, car.width, car.height);
+        }
+
+        function createObstacles() {
+            if (Math.random() < 0.05) {
+                obstacles.push({ x: Math.random() * (canvas.width - 50), y: 0, width: 50, height: 50 });
+            }
+        }
+
+        function moveObstacles() {
+            obstacles.forEach(obstacle => {
+                obstacle.y += 5;
+            });
+        }
+
+        function drawObstacles() {
+            obstacles.forEach(obstacle => {
+                ctx.fillStyle = "green";
+                ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+            });
+        }
+
+        function checkCollisions() {
+            for (let i = 0; i < obstacles.length; i++) {
+                if (car.x < obstacles[i].x + obstacles[i].width &&
+                    car.x + car.width > obstacles[i].x &&
+                    car.y < obstacles[i].y + obstacles[i].height &&
+                    car.y + car.height > obstacles[i].y) {
+                    clearInterval(gameInterval); // Stop the game
+                    alert("You crashed!");
+                }
+            }
+        }
+
+        startGame();
+    </script>
+</body>
+</html>
