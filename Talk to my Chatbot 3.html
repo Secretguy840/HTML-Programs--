@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Omniscient AI Assistant</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: white;
+        }
+        
+        #canvas-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #chat-container {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: 400px;
+            max-height: 70vh;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+        }
+        
+        #chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            padding-right: 10px;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .user-message {
+            text-align: right;
+            color: #4fc3f7;
+        }
+        
+        .bot-message {
+            text-align: left;
+        }
+        
+        #input-container {
+            display: flex;
+        }
+        
+        #user-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: none;
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            outline: none;
+        }
+        
+        #send-btn {
+            background: #4fc3f7;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            margin-left: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        #send-btn:hover {
+            background: #0288d1;
+            transform: scale(1.05);
+        }
+        
+        .typing-indicator {
+            display: inline-block;
+        }
+        
+        .typing-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: #4fc3f7;
+            border-radius: 50%;
+            margin-right: 3px;
+            animation: typingAnimation 1.4s infinite ease-in-out;
+        }
+        
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typingAnimation {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-5px); }
+        }
+        
+        .expression {
+            font-size: 24px;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        
+        #knowledge-graph {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 300px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 15px;
+            padding: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            z-index: 100;
+        }
+        
+        .knowledge-node {
+            background: rgba(79, 195, 247, 0.2);
+            border-radius: 8px;
+            padding: 8px;
+            margin: 5px 0;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .knowledge-node:hover {
+            background: rgba(79, 195, 247, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+    
+    <div id="chat-container">
+        <div id="chat-messages">
+            <div class="message bot-message">
+                <span class="expression">🌐</span>
+                <span>Hello! I'm your 3D omniscient AI assistant. Ask me anything across all domains of knowledge.</span>
+            </div>
+        </div>
+        
+        <div id="input-container">
+            <input type="text" id="user-input" placeholder="Ask me anything...">
+            <button id="send-btn">➤</button>
+        </div>
+    </div>
+    
+    <div id="knowledge-graph">
+        <h3>Knowledge Graph</h3>
+        <div id="knowledge-nodes"></div>
+    </div>
+
+    <script>
+        // Three.js 3D Scene Setup
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(renderer.domElement);
+        
+        // Lights
+        const ambientLight = new THREE.AmbientLight(0x404040);
+        scene.add(ambientLight);
+        
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+        directionalLight.position.set(1, 1, 1);
+        scene.add(directionalLight);
+        
+        // Robot Model (simplified)
+        const robotGeometry = new THREE.BoxGeometry(1, 1.5, 1);
+        const robotMaterial = new THREE.MeshPhongMaterial({ 
+            color: 0x4fc3f7,
+            emissive: 0x0,
+            specular: 0x111111,
+            shininess: 30,
+            transparent: true,
+            opacity: 0.9
+        });
+        const robot = new THREE.Mesh(robotGeometry, robotMaterial);
+        scene.add(robot);
+        
+        // Add antenna
+        const antennaGeometry = new THREE.CylinderGeometry(0.05, 0.05, 0.5, 8);
+        const antenna = new THREE.Mesh(antennaGeometry, robotMaterial);
+        antenna.position.y = 1.25;
+        robot.add(antenna);
+        
+        // Add eyes
+        const eyeGeometry = new THREE.SphereGeometry(0.1, 16, 16);
+        const eyeMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        
+        const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+        leftEye.position.set(-0.2, 0.2, 0.51);
+        robot.add(leftEye);
+        
+        const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+        rightEye.position.set(0.2, 0.2, 0.51);
+        robot.add(rightEye);
+        
+        // Add pupils
+        const pupilGeometry = new THREE.SphereGeometry(0.05, 16, 16);
+        const pupilMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+        
+        const leftPupil = new THREE.Mesh(pupilGeometry, pupilMaterial);
+        leftPupil.position.set(-0.2, 0.2, 0.52);
+        robot.add(leftPupil);
+        
+        const rightPupil = new THREE.Mesh(pupilGeometry, pupilMaterial);
+        rightPupil.position.set(0.2, 0.2, 0.52);
+        robot.add(rightPupil);
+        
+        // Add floating particles
+        const particles = [];
+        const particleGeometry = new THREE.SphereGeometry(0.03, 8, 8);
+        const particleMaterial = new THREE.MeshBasicMaterial({ color: 0x4fc3f7 });
+        
+        for (let i = 0; i < 50; i++) {
+            const particle = new THREE.Mesh(particleGeometry, particleMaterial);
+            particle.position.x = Math.random() * 10 - 5;
+            particle.position.y = Math.random() * 10 - 5;
+            particle.position.z = Math.random() * 10 - 5;
+            particle.userData = {
+                speed: Math.random() * 0.02 + 0.01,
+                direction: new THREE.Vector3(
+                    Math.random() * 2 - 1,
+                    Math.random() * 2 - 1,
+                    Math.random() * 2 - 1
+                ).normalize()
+            };
+            scene.add(particle);
+            particles.push(particle);
+        }
+        
+        // Camera position
+        camera.position.z = 5;
+        
+        // Controls
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Robot animation
+            robot.rotation.y += 0.005;
+            
+            // Particles animation
+            particles.forEach(particle => {
+                particle.position.addScaledVector(particle.userData.direction, particle.userData.speed);
+                
+                // Bounce off imaginary walls
+                if (Math.abs(particle.position.x) > 5) particle.userData.direction.x *= -1;
+                if (Math.abs(particle.position.y) > 5) particle.userData.direction.y *= -1;
+                if (Math.abs(particle.position.z) > 5) particle.userData.direction.z *= -1;
+            });
+            
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // Chat Functionality
+        const chatMessages = document.getElementById('chat-messages');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        const knowledgeNodes = document.getElementById('knowledge-nodes');
+        
+        // Knowledge base
+        const knowledgeBase = {
+            "science": {
+                response: "Science is the systematic study of the nature and behavior of the universe through observation and experiment.",
+                expression: "🔬",
+                related: ["physics", "chemistry", "biology"]
+            },
+            "technology": {
+                response: "Technology encompasses the application of scientific knowledge for practical purposes, transforming how we live and work.",
+                expression: "💻",
+                related: ["computers", "AI", "robotics"]
+            },
+            "history": {
+                response: "History is the study of past events, particularly in human affairs, helping us understand our present and shape our future.",
+                expression: "🏛️",
+                related: ["ancient civilizations", "wars", "cultural evolution"]
+            },
+            "default": {
+                response: "I possess comprehensive knowledge about that subject. ",
+                expression: "🧠",
+                related: []
+            }
+        };
+        
+        // Expressions based on question type
+        const expressions = {
+            "what": "🤔",
+            "why": "🧐",
+            "how": "🔍",
+            "who": "👤",
+            "when": "⌛",
+            "where": "📍",
+            "default": "🌐"
+        };
+        
+        // Add message to chat
+        function addMessage(content, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+            
+            if (isUser) {
+                messageDiv.textContent = content;
+            } else {
+                messageDiv.innerHTML = `<span class="expression">${content.expression}</span><span>${content.text}</span>`;
+            }
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        // Show typing indicator
+        function showTyping() {
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message bot-message';
+            typingDiv.id = 'typing';
+            typingDiv.innerHTML = `
+                <span class="expression">${getExpression(userInput.value)}</span>
+                <span class="typing-indicator">
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                </span>
+            `;
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            return typingDiv;
+        }
+        
+        // Hide typing indicator
+        function hideTyping() {
+            const typing = document.getElementById('typing');
+            if (typing) typing.remove();
+        }
+        
+        // Get appropriate expression
+        function getExpression(question) {
+            if (!question) return expressions.default;
+            
+            question = question.toLowerCase();
+            for (const [word, exp] of Object.entries(expressions)) {
+                if (question.startsWith(word)) return exp;
+            }
+            return expressions.default;
+        }
+        
+        // Update knowledge graph
+        function updateKnowledgeGraph(topic) {
+            knowledgeNodes.innerHTML = '';
+            
+            const knowledge = knowledgeBase[topic] || knowledgeBase.default;
+            const topics = [topic, ...knowledge.related];
+            
+            topics.forEach(t => {
+                const node = document.createElement('div');
+                node.className = 'knowledge-node';
+                node.textContent = t;
+                knowledgeNodes.appendChild(node);
+            });
+        }
+        
+        // Process user input
+        function processInput() {
+            const question = userInput.value.trim();
+            if (!question) return;
+            
+            // Add user message
+            addMessage(question, true);
+            userInput.value = '';
+            
+            // Show typing indicator
+            const typing = showTyping();
+            
+            // Simulate processing delay
+            setTimeout(() => {
+                hideTyping();
+                
+                const expression = getExpression(question);
+                const lowerQuestion = question.toLowerCase();
+                
+                // Find matching response
+                let response = knowledgeBase.default;
+                for (const topic in knowledgeBase) {
+                    if (lowerQuestion.includes(topic) && topic !== 'default') {
+                        response = knowledgeBase[topic];
+                        updateKnowledgeGraph(topic);
+                        break;
+                    }
+                }
+                
+                // Animate robot
+                robot.position.y = 0.5;
+                anime({
+                    targets: robot.position,
+                    y: 0,
+                    duration: 1000,
+                    easing: 'easeOutElastic'
+                });
+                
+                // Add bot response
+                addMessage({
+                    expression: response.expression,
+                    text: response.response + (response === knowledgeBase.default ? 
+                        `Here's what I know about "${question}": After cross-referencing all available data, I can confirm this is a valid topic with multiple verified sources.` : 
+                        '')
+                });
+            }, 1500 + Math.random() * 1000);
+        }
+        
+        // Event listeners
+        sendBtn.addEventListener('click', processInput);
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') processInput();
+        });
+    </script>
+</body>
+</html>

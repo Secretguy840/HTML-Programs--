@@ -1,0 +1,440 @@
+<html>
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Polite AI Chatbot with Robot Expressions and Gemini Info</title>
+<style>
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #1a2138;
+    color: #f0f2f5;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  header {
+    background-color: #102a4f;
+    padding: 1.2rem;
+    text-align: center;
+    font-size: 1.7rem;
+    font-weight: 600;
+    color: #92d4ff;
+    user-select: none;
+  }
+
+  #main {
+    display: flex;
+    flex-grow: 1;
+    overflow: hidden;
+  }
+
+  #chat-container {
+    width: 420px;
+    max-width: 100vw;
+    background: #223354;
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    box-sizing: border-box;
+    border-right: 3px solid #548cff;
+  }
+
+  #chat-messages {
+    flex-grow: 1;
+    overflow-y: auto;
+    margin-bottom: 1rem;
+    padding-right: 0.5rem;
+  }
+
+  .message {
+    margin-bottom: 1rem;
+    line-height: 1.3;
+    max-width: 90%;
+    word-wrap: break-word;
+    padding: 0.6rem 1rem;
+    border-radius: 15px;
+    font-size: 1rem;
+  }
+
+  .user-message {
+    background: #548cff;
+    color: #1a2138;
+    align-self: flex-end;
+    border-bottom-right-radius: 0;
+    box-shadow: 0 1px 5px rgba(84,140,255,0.3);
+  }
+
+  .bot-message {
+    background: #34527e;
+    color: #dce6f9;
+    align-self: flex-start;
+    border-bottom-left-radius: 0;
+    box-shadow: 0 1px 8px rgba(20,70,130,0.5);
+  }
+
+  #input-area {
+    display: flex;
+  }
+
+  #input-area input[type="text"] {
+    flex-grow: 1;
+    font-size: 1.1rem;
+    padding: 0.7rem 1rem;
+    border-radius: 15px 0 0 15px;
+    border: none;
+    outline: none;
+    background: #335086;
+    color: #f0f2f5;
+    box-shadow: inset 0 0 6px #1a2b55;
+  }
+
+  #input-area button {
+    background: #548cff;
+    border: none;
+    color: #1a2138;
+    font-weight: 700;
+    font-size: 1.1rem;
+    padding: 0 1.5rem;
+    border-radius: 0 15px 15px 0;
+    cursor: pointer;
+    box-shadow: 0 0 8px #548cffaa;
+    transition: background-color 0.3s ease;
+  }
+
+  #input-area button:hover:not(:disabled) {
+    background: #3c69d0;
+    color: #e5e9f9;
+  }
+
+  #input-area button:disabled {
+    background: #2a395c;
+    cursor: default;
+    box-shadow: none;
+  }
+
+  #robot-container {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: radial-gradient(circle at center, #0d1a2e, #223354);
+  }
+
+  /* Robot Face */
+  #robot-face {
+    width: 340px;
+    height: 340px;
+    background: #142c5b;
+    border-radius: 50%;
+    border: 7px solid #548cff;
+    position: relative;
+    box-shadow: 0 0 22px #548cffaa inset;
+  }
+
+  /* Eyes */
+  .eye {
+    position: absolute;
+    top: 100px;
+    width: 68px;
+    height: 68px;
+    background: #85cfff;
+    border-radius: 50%;
+    box-shadow: 0 0 16px #85cfff;
+    overflow: hidden;
+  }
+
+  #eye-left {
+    left: 80px;
+  }
+
+  #eye-right {
+    right: 80px;
+  }
+
+  .pupil {
+    position: relative;
+    top: 22px;
+    left: 22px;
+    width: 24px;
+    height: 24px;
+    background: #0a1c4c;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+  }
+
+  /* Expressions variations */
+  .eye.happy {
+    background: #a3d6ff;
+    box-shadow: 0 0 20px #a3d6ff;
+  }
+
+  .eye.sad {
+    background: #4d6c9c;
+    box-shadow: 0 0 10px #4d6c9c;
+  }
+
+  /* Mouth */
+  #mouth {
+    position: absolute;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 140px;
+    height: 36px;
+    background: #85cfff;
+    border-radius: 0 0 90px 90px;
+    overflow: hidden;
+    box-shadow: 0 0 22px #85cfff;
+    transition: background-color 0.3s ease;
+  }
+
+  /* Mouth inner (lip sync) */
+  #mouth-inner {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 18px;
+    background: #0a1c4c;
+    border-radius: 60px 60px 20px 20px;
+    transition: height 0.1s ease;
+  }
+
+  /* Mouth shapes */
+  #mouth.sad {
+    background: #4d6c9c;
+  }
+
+  #mouth.happy {
+    background: #cde4ff;
+  }
+
+  /* Blinking animation */
+  @keyframes blink {
+    0%, 20%, 40%, 60%, 80%, 100% {
+      transform: scaleY(1);
+    }
+    10%, 30%, 50%, 70%, 90% {
+      transform: scaleY(0.12);
+    }
+  }
+
+  .eye.blink .pupil {
+    animation: blink 5s infinite;
+  }
+
+  /* Scrollbar styling */
+  #chat-messages::-webkit-scrollbar {
+    width: 7px;
+  }
+  #chat-messages::-webkit-scrollbar-track {
+    background: #223354;
+  }
+  #chat-messages::-webkit-scrollbar-thumb {
+    background: #548cff;
+    border-radius: 4px;
+  }
+</style>
+</head>
+<body>
+<header>Polite AI Chatbot - Your Friendly Robot Guide</header>
+<div id="main">
+  <div id="chat-container" role="region" aria-label="Chat with Polite AI Robot">
+    <div id="chat-messages" aria-live="polite"></div>
+    <form id="input-area" aria-label="Send your question">
+      <input type="text" id="user-input" aria-label="Type your question here" autocomplete="off" required />
+      <button type="submit" aria-label="Send question">Send</button>
+    </form>
+  </div>
+  <div id="robot-container" aria-hidden="true">
+    <div id="robot-face" role="img" aria-label="Robot face with animated expressions">
+      <div class="eye eye-left" id="eye-left">
+        <div class="pupil"></div>
+      </div>
+      <div class="eye eye-right" id="eye-right">
+        <div class="pupil"></div>
+      </div>
+      <div id="mouth">
+        <div id="mouth-inner"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const chatMessages = document.getElementById('chat-messages');
+  const userInput = document.getElementById('user-input');
+  const chatForm = document.getElementById('input-area');
+  const mouthInner = document.getElementById('mouth-inner');
+  const mouth = document.getElementById('mouth');
+  const eyeLeft = document.getElementById('eye-left');
+  const eyeRight = document.getElementById('eye-right');
+
+  // Simple expression detection based on keywords
+  function getExpression(text) {
+    const t = text.toLowerCase();
+    if (
+      t.includes('thank') || t.includes('glad') || t.includes('happy') || t.includes('delighted') || t.includes('pleasant')
+    ) return 'happy';
+
+    if (
+      t.includes('sorry') || t.includes('unfortunately') || t.includes('sad') || t.includes('problem') || t.includes('mistake')
+    ) return 'sad';
+
+    return 'neutral';
+  }
+
+  // Knowledge about Gemini (polite, informative)
+  const geminiInfo = `Gemini is the third astrological sign in the Zodiac, spanning the 60-90th degree of the zodiac. It is symbolized by The Twins, Castor and Pollux, representing duality and versatility. People born under Gemini (May 21 - June 20) are often characterized by their adaptability, curiosity, and communication skills. If you have any questions or want to know more about astrology or other fascinating topics, please feel free to ask.`;
+
+  // Polite AI Response Generator with basic universal knowledge, politesse, and Gemini info
+  function generateAIResponse(input) {
+    const question = input.trim().toLowerCase();
+
+    if (!question) {
+      return "I'm here to assist you kindly. Would you please type a question for me?";
+    }
+
+    // Special Polite greetings
+    if (question.includes('hello') || question.includes('hi') || question.includes('good morning') || question.includes('good evening')) {
+      return "Hello! I'm truly delighted to assist you today. How may I be of service?";
+    }
+
+    if (question.includes('your name')) {
+      return "My name is RoboPolite, your courteous AI companion, always here to help you.";
+    }
+
+    if (question.includes('thank') || question.includes('thanks')) {
+      return "You're most welcome! I'm very glad I could help you. Please do not hesitate to ask any more questions.";
+    }
+
+    if (question.includes('gemini')) {
+      return geminiInfo;
+    }
+
+    if (question.includes('time')) {
+      return `It would be my pleasure to share the current time with you: ${new Date().toLocaleTimeString()}.`;
+    }
+
+    if (question.includes('weather')) {
+      return "I wish I could provide real-time weather updates, but at the moment, I am better at sharing knowledge and kindness!";
+    }
+
+    if (question.includes('meaning of life')) {
+      return "That's a very profound question. Many say the meaning of life is to seek happiness, love, and understanding. I hope I can help light your path with kindness.";
+    }
+
+    if (question.includes('joke')) {
+      return "Certainly! Why don't robots ever get tired? Because they have infinite batteries! I hope that brought a smile to your face!";
+    }
+
+    if (question.includes('who made you') || question.includes('creator')) {
+      return "I was thoughtfully created by a kind person passionate about bringing warmth into artificial intelligence.";
+    }
+
+    if (question.endsWith('?')) {
+      return "Thank you for your question. While I strive to know much, I am ever learning and am happy to explore answers with you.";
+    }
+
+    return "I appreciate your interest. Please feel free to ask me anything else, and I'll do my best to assist with courtesy and care.";
+  }
+
+  // Voice synthesis and lip sync animation
+  function speakText(text) {
+    if (!('speechSynthesis' in window)) {
+      console.warn('Speech synthesis not supported in this browser.');
+      return;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-US';
+    utterance.rate = 1.05;
+    utterance.pitch = 1.1;
+
+    let mouthOpen = false;
+    let mouthTimer;
+
+    utterance.onstart = () => {
+      mouthTimer = setInterval(() => {
+        mouthOpen = !mouthOpen;
+        mouthInner.style.height = mouthOpen ? '40px' : '18px';
+      }, 140);
+    };
+
+    utterance.onend = () => {
+      clearInterval(mouthTimer);
+      mouthInner.style.height = '18px';
+      updateRobotExpression('neutral');
+    };
+
+    utterance.onerror = () => {
+      clearInterval(mouthTimer);
+      mouthInner.style.height = '18px';
+      updateRobotExpression('neutral');
+    };
+
+    speechSynthesis.speak(utterance);
+  }
+
+  // Update robot's expression
+  function updateRobotExpression(expr) {
+    eyeLeft.classList.remove('happy', 'sad');
+    eyeRight.classList.remove('happy', 'sad');
+    mouth.classList.remove('happy', 'sad');
+
+    if (expr === 'happy') {
+      eyeLeft.classList.add('happy');
+      eyeRight.classList.add('happy');
+      mouth.classList.add('happy');
+    } else if (expr === 'sad') {
+      eyeLeft.classList.add('sad');
+      eyeRight.classList.add('sad');
+      mouth.classList.add('sad');
+    }
+  }
+
+  // Add chat message visible on UI
+  function addMessage(text, sender = 'bot') {
+    const messageElem = document.createElement('div');
+    messageElem.classList.add('message');
+    messageElem.classList.add(sender === 'user' ? 'user-message' : 'bot-message');
+    messageElem.textContent = text;
+    chatMessages.appendChild(messageElem);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  chatForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const question = userInput.value.trim();
+    if (!question) return;
+
+    addMessage(question, 'user');
+    userInput.value = '';
+    userInput.disabled = true;
+    chatForm.querySelector('button').disabled = true;
+
+    setTimeout(() => {
+      const response = generateAIResponse(question);
+
+      addMessage(response, 'bot');
+
+      const expr = getExpression(response);
+      updateRobotExpression(expr);
+      speakText(response);
+
+      userInput.disabled = false;
+      chatForm.querySelector('button').disabled = false;
+      userInput.focus();
+    }, 750);
+  });
+
+  // Initial polite greeting
+  addMessage("Greetings! I'm RoboPolite, your friendly AI assistant. How may I assist you with kindness and care today?", 'bot');
+  updateRobotExpression('happy');
+</script>
+</body>
+</html>
