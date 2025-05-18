@@ -1,0 +1,13 @@
+<button id="openModal">Open Modal</button>
+
+<dialog id="modal">
+  <h2>Modal Title</h2>
+  <p>This is an accessible HTML5 dialog.</p>
+  <button id="closeModal">Close</button>
+</dialog>
+
+<script>
+  const modal = document.getElementById('modal');
+  document.getElementById('openModal').addEventListener('click', () => modal.showModal());
+  document.getElementById('closeModal').addEventListener('click', () => modal.close());
+</script>
