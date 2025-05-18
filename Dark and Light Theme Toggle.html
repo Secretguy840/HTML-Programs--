@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+  <style>
+    :root { --bg: #fff; --text: #222; }
+    [data-theme="dark"] { --bg: #222; --text: #fff; }
+    body { background: var(--bg); color: var(--text); }
+  </style>
+</head>
+<body>
+  <button onclick="toggleTheme()">Toggle Theme</button>
+
+  <script>
+    function toggleTheme() {
+      const html = document.documentElement;
+      html.dataset.theme = html.dataset.theme === "light" ? "dark" : "light";
+    }
+  </script>
+</body>
+</html>
